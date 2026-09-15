@@ -14,6 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.EditText;
 
 public class RoomActivity extends Activity {
     private final int navy = Color.rgb(5, 22, 65);
@@ -22,11 +23,17 @@ public class RoomActivity extends Activity {
     private String roomCode;
     private String roomUrl;
     private TextView queue;
+    private LinearLayout chatArea;
+    private int coins = 100;
+    private boolean adminMode;
+    private String artist;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         roomCode = getIntent().getStringExtra("room_code");
         roomUrl = getIntent().getStringExtra("room_url");
+        artist = getIntent().getStringExtra("artist");
+        if (artist == null || artist.trim().isEmpty()) artist = "Britto";
         if (roomCode == null) roomCode = "VIP2026";
         if (roomUrl == null) roomUrl = "https://meet.jit.si/KaraokeStudio-" + roomCode;
         getWindow().setStatusBarColor(navy);
@@ -57,8 +64,9 @@ public class RoomActivity extends Activity {
         root.addView(header, match());
 
         LinearLayout stats = row();
-        stats.addView(pill("🏆 Nível 1", Color.argb(150, 10, 48, 120)), weighted());
-        stats.addView(pill("⭐ 0 pontos", Color.argb(150, 13, 63, 145)), weighted());
+        stats.addView(pill("🏆 Ranking #1", Color.argb(150, 10, 48, 120)), weighted());
+        TextView wallet = pill("💎 " + coins + " moedas", Color.argb(150, 13, 63, 145));
+        stats.addView(wallet, weighted());
         root.addView(stats, margins(match(), 0, 12, 0, 12));
 
         LinearLayout stage = column();
@@ -92,8 +100,51 @@ public class RoomActivity extends Activity {
         queueBar.addView(sing, new LinearLayout.LayoutParams(dp(122), dp(54)));
         root.addView(queueBar, match());
 
-        root.addView(chat("💎 APRESENTADOR", "Bem-vindo! Escolha sua música."), margins(match(), 8, 18, 40, 5));
-        root.addView(chat("🎤 BRITTO", "Respeito é bom e todos nós desejamos."), margins(match(), 42, 5, 8, 18));
+        String suppliedLyrics = getIntent().getStringExtra("lyrics");
+        if (suppliedLyrics != null && !suppliedLyrics.trim().isEmpty()) {
+            TextView lyricCard = chat("🎼 LETRA DA MÚSICA", suppliedLyrics);
+            lyricCard.setGravity(Gravity.CENTER);
+            root.addView(lyricCard, margins(match(), 8, 14, 8, 5));
+        }
+
+        chatArea = column();
+        chatArea.addView(chat("💎 APRESENTADOR", "Bem-vindo! Escolha sua música."), margins(match(), 8, 18, 40, 5));
+        chatArea.addView(chat("🎤 " + artist.toUpperCase(), "Respeito é bom e todos nós desejamos."), margins(match(), 42, 5, 8, 8));
+        root.addView(chatArea, match());
+
+        LinearLayout composer = row();
+        EditText message = new EditText(this);
+        message.setHint("Digite no chat..."); message.setTextColor(Color.WHITE); message.setHintTextColor(Color.LTGRAY);
+        composer.addView(message, new LinearLayout.LayoutParams(0, dp(56), 1));
+        Button send = action("Enviar");
+        send.setOnClickListener(v -> {
+            String value = message.getText().toString().trim();
+            if (!value.isEmpty()) { chatArea.addView(chat("🎤 " + artist.toUpperCase(), value), margins(match(), 42, 5, 8, 5)); message.setText(""); }
+        });
+        composer.addView(send, new LinearLayout.LayoutParams(dp(100), dp(54)));
+        root.addView(composer, margins(match(), 0, 4, 0, 12));
+
+        LinearLayout gifts = row();
+        String[] giftNames = {"🌹 Rosa 5", "🏆 Troféu 20", "👑 Coroa 50"};
+        for (String giftName : giftNames) {
+            TextView gift = pill(giftName, Color.argb(180, 8, 54, 130));
+            gift.setOnClickListener(v -> {
+                int cost = giftName.contains("50") ? 50 : giftName.contains("20") ? 20 : 5;
+                if (coins < cost) { Toast.makeText(this, "Moedas insuficientes", Toast.LENGTH_SHORT).show(); return; }
+                coins -= cost; wallet.setText("💎 " + coins + " moedas");
+                chatArea.addView(chat("🎁 PRESENTE", artist + " enviou " + giftName));
+            });
+            gifts.addView(gift, margins(weighted(), 2, 2, 2, 2));
+        }
+        root.addView(gifts, margins(match(), 0, 0, 0, 12));
+
+        Button admin = action("🛡️ Ativar controles de administrador");
+        admin.setOnClickListener(v -> {
+            adminMode = !adminMode;
+            admin.setText(adminMode ? "🛡️ Administrador ativo: silenciar e remover" : "🛡️ Ativar controles de administrador");
+            Toast.makeText(this, adminMode ? "Controles ativados" : "Controles desativados", Toast.LENGTH_SHORT).show();
+        });
+        root.addView(admin, margins(new LinearLayout.LayoutParams(-1, dp(54)), 0, 0, 0, 10));
 
         Button live = action("📹  ABRIR ÁUDIO E VÍDEO AO VIVO");
         live.setOnClickListener(v -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(roomUrl))));
