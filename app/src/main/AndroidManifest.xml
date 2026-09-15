@@ -9,6 +9,10 @@
         android:label="Karaoke Studio"
         android:theme="@style/Theme.KaraokeStudio">
         <activity
+            android:name=".CatalogActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
             android:name=".RoomActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
