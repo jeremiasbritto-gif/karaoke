@@ -155,7 +155,10 @@ public class MainActivity extends Activity {
     }
 
     private void openLiveRoom() {
-        Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(roomUrl()));
+        String url = roomUrl();
+        Intent i = new Intent(this, RoomActivity.class);
+        i.putExtra("room_code", roomCode.getText().toString());
+        i.putExtra("room_url", url);
         startActivity(i);
     }
 
