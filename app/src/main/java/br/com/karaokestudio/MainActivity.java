@@ -26,6 +26,8 @@ import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.Spinner;
+import android.widget.ArrayAdapter;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
@@ -43,7 +45,7 @@ public class MainActivity extends Activity {
     private Uri selectedTrack, savedRecording;
     private TextView trackLabel, status, scoreLabel;
     private Button recordButton;
-    private EditText roomCode;
+    private EditText roomCode, artistName, lyrics;
     private VoiceGraphView voiceGraph;
     private boolean recording;
     private int score, meterSamples;
@@ -84,6 +86,21 @@ public class MainActivity extends Activity {
         root.addView(text("Sua voz. Seu palco. Seus amigos.", 15, Color.DKGRAY, Gravity.CENTER),
                 margins(matchWrap(), 0, 4, 0, 24));
 
+        TextView profileTitle = text("PERFIL DO CANTOR", 14, blue, Gravity.START);
+        profileTitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        root.addView(profileTitle, matchWrap());
+        artistName = new EditText(this);
+        artistName.setHint("Seu nome artístico");
+        artistName.setSingleLine(true);
+        artistName.setText(getPreferences(MODE_PRIVATE).getString("artist", "Britto"));
+        root.addView(artistName, matchWrap());
+        Button saveProfile = button("👤 Salvar meu perfil");
+        saveProfile.setOnClickListener(v -> {
+            getPreferences(MODE_PRIVATE).edit().putString("artist", artistName.getText().toString()).apply();
+            Toast.makeText(this, "Perfil salvo ✓", Toast.LENGTH_SHORT).show();
+        });
+        root.addView(saveProfile, margins(matchWrap(), 0, 6, 0, 22));
+
         TextView localTitle = text("KARAOKÊ NO CELULAR", 14, blue, Gravity.START);
         localTitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         root.addView(localTitle, matchWrap());
@@ -93,6 +110,18 @@ public class MainActivity extends Activity {
         root.addView(choose, margins(matchWrap(), 0, 8, 0, 0));
         trackLabel = text("Nenhuma música escolhida", 14, Color.DKGRAY, Gravity.CENTER);
         root.addView(trackLabel, margins(matchWrap(), 0, 8, 0, 12));
+
+        lyrics = new EditText(this);
+        lyrics.setHint("Cole aqui a letra da música para acompanhar");
+        lyrics.setMinLines(4);
+        lyrics.setGravity(Gravity.TOP);
+        root.addView(lyrics, margins(matchWrap(), 0, 2, 0, 10));
+
+        root.addView(text("Efeito de voz", 13, Color.GRAY, Gravity.START), matchWrap());
+        Spinner effects = new Spinner(this);
+        String[] options = {"Voz natural", "Reverb de palco", "Voz suave", "Voz potente"};
+        effects.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, options));
+        root.addView(effects, margins(matchWrap(), 0, 2, 0, 8));
 
         root.addView(text("Volume do playback", 13, Color.GRAY, Gravity.START), matchWrap());
         SeekBar volume = new SeekBar(this);
@@ -159,6 +188,8 @@ public class MainActivity extends Activity {
         Intent i = new Intent(this, RoomActivity.class);
         i.putExtra("room_code", roomCode.getText().toString());
         i.putExtra("room_url", url);
+        i.putExtra("artist", artistName.getText().toString());
+        i.putExtra("lyrics", lyrics.getText().toString());
         startActivity(i);
     }
 
