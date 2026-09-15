@@ -17,6 +17,7 @@ import android.widget.Toast;
 import android.widget.EditText;
 
 public class RoomActivity extends Activity {
+    private static final int PICK_SERVER_SONG = 40;
     private final int navy = Color.rgb(5, 22, 65);
     private final int blue = Color.rgb(18, 92, 210);
     private final int cyan = Color.rgb(39, 202, 255);
@@ -156,11 +157,32 @@ public class RoomActivity extends Activity {
             TextView item = label(control, 13, Color.WHITE);
             item.setGravity(Gravity.CENTER);
             if (control.contains("Convidar")) item.setOnClickListener(v -> share());
+            if (control.contains("Música")) item.setOnClickListener(v -> {
+                Intent pick = new Intent(this, CatalogActivity.class);
+                startActivityForResult(pick, PICK_SERVER_SONG);
+            });
             bottom.addView(item, weighted());
         }
         root.addView(bottom, margins(match(), 0, 5, 0, 8));
         root.addView(center("Sala de teste • câmera e microfone usam o Jitsi gratuito", 11, Color.rgb(167, 213, 255)), match());
         return scroll;
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_SERVER_SONG && resultCode == RESULT_OK && data != null) {
+            String song = data.getStringExtra("song_title");
+            String singer = data.getStringExtra("song_artist");
+            String lyrics = data.getStringExtra("song_lyrics");
+            String audio = data.getStringExtra("song_audio");
+            queue.setText("🎵 Na lista (1)\n" + artist + " — " + song);
+            chatArea.addView(chat("📋 FILA", artist + " escolheu " + song + " • " + singer));
+            if (lyrics != null && !lyrics.isEmpty()) chatArea.addView(chat("🎼 LETRA", lyrics));
+            if (audio != null && !audio.isEmpty()) {
+                queue.setOnClickListener(v -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(audio))));
+                Toast.makeText(this, "Música adicionada. Toque na fila para abrir o playback.", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     private void share() {
